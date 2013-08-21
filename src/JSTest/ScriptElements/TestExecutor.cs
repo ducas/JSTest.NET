@@ -16,10 +16,10 @@
 
 namespace JSTest.ScriptElements
 {
-    internal class TestExecutor : ScriptBlock
+    internal class TestExecutor : ScriptElement
     {
-        private const String UnformattedScriptBlock =
-          @"(function () {{
+        private const String WScriptBlock =@"<script language='JavaScript'>
+(function () {{
   try {{
     WScript.Echo(JSON.stringify((function () {{
       // START TEST BLOCK //
@@ -38,14 +38,62 @@ try {{
     WScript.Echo(JSON.stringify(ex));
     WScript.Quit(1);
   }}
-}})();";
+}})();
+</script>";
+
+        private const String JsonResultScriptBlock = @"
+(function () {{
+    try {{
+        return JSON.stringify({{
+            successful: true,
+            result: JSON.stringify(
+                (function () {{
+                    // START TEST BLOCK //
+                    {0}
+                    try {{
+                        {1}
+                    }} finally {{
+                        {2}
+                    }}
+                    // END TEST BLOCK //
+                    return null;
+                }})()
+            )
+        }});
+    }}
+    catch (ex) {{
+        return JSON.stringify({{
+            successful: false,
+            error: JSON.stringify(ex)
+        }});
+    }}
+}})();
+";
+
+        private string setup = string.Empty;
+        private string test = string.Empty;
+        private string teardown = string.Empty;
 
         public TestExecutor(String test)
-            : base(String.Format(UnformattedScriptBlock, String.Empty, test, String.Empty))
-        { }
+        {
+            this.test = test;
+        }
 
         public TestExecutor(String setup, String test, String teardown)
-            : base(String.Format(UnformattedScriptBlock, setup, test, teardown))
-        { }
+        {
+            this.setup = setup;
+            this.test = test;
+            this.teardown = teardown;
+        }
+
+        public override string ToScriptFragment()
+        {
+            return string.Format(WScriptBlock, setup, test, teardown);
+        }
+
+        public override string ToInlineScriptFragment()
+        {
+            return string.Format(JsonResultScriptBlock, setup, test, teardown);
+        }
     }
 }

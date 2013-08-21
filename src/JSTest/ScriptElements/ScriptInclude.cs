@@ -35,5 +35,10 @@ namespace JSTest.ScriptElements
         {
             return String.Format("<script language='JavaScript' src='{0}'></script>", _fileInfo.FullName);
         }
+
+        public override string ToInlineScriptFragment()
+        {
+            return File.ReadAllText(_fileInfo.FullName);
+        }
     }
 }

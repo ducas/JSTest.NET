@@ -64,5 +64,10 @@ namespace JSTest.ScriptElements
 
             return result.ToArray();
         }
+
+        public override string ToInlineScriptFragment()
+        {
+            return String.Format("return {0}();", _functionName);
+        }
     }
 }

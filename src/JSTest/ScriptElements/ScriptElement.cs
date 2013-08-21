@@ -19,6 +19,7 @@ namespace JSTest.ScriptElements
     public abstract class ScriptElement
     {
         public abstract String ToScriptFragment();
+        public abstract String ToInlineScriptFragment();
 
         public static implicit operator String(ScriptElement element)
         {

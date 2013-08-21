@@ -31,5 +31,10 @@ namespace JSTest.ScriptElements
         {
             return String.Format("<script language='JavaScript'>{0}{1}{0}</script>", Environment.NewLine, _scriptBlock);
         }
+
+        public override string ToInlineScriptFragment()
+        {
+            return _scriptBlock;
+        }
     }
 }
