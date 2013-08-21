@@ -24,87 +24,35 @@ namespace JSTest.Test
         [Theory, InlineData(0), InlineData(100), InlineData(Int16.MaxValue)]
         public void TimeoutAcceptedIfSecondsBetweenZeroAnd32768(Int32 timeout)
         {
-            Assert.DoesNotThrow(() => new CScriptCommand(TimeSpan.FromSeconds(timeout)));
+            Assert.DoesNotThrow(() => new CScriptEngine(TimeSpan.FromSeconds(timeout)));
         }
 
         [Theory, InlineData(-1), InlineData(Int16.MaxValue + 1)]
         public void TimeoutRejectedIfSecondsNotBetweenZeroAnd32767(Int32 timeout)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new CScriptCommand(TimeSpan.FromSeconds(timeout)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new CScriptEngine(TimeSpan.FromSeconds(timeout)));
         }
 
         [Fact]
         public void RunReturnsStdOutText()
         {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>WScript.Echo('Sample Text');</script></job>");
-
-                Assert.Equal("Sample Text", new CScriptCommand().Run(tempFile.FileName));
-            }
+            Assert.Equal("Sample Text", new CScriptEngine().Execute(@"<script language='JavaScript'>WScript.Echo('Sample Text');</script>"));
         }
 
         [Fact]
         public void RunThrowsInvalidProgramExceptionOnBadInputFile()
         {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>function ) { return 'Missing Opening ('; }</script></job>");
+            var ex = Assert.Throws<ScriptException>(() => new CScriptEngine().Execute(@"<script language='JavaScript'>function ) { return 'Missing Opening ('; }</script>"));
 
-                var ex = Assert.Throws<ScriptException>(() => new CScriptCommand().Run(tempFile.FileName));
-
-                Assert.Contains("Microsoft JScript compilation error: Expected '('", ex.Message);
-            }
+            Assert.Contains("Microsoft JScript compilation error: Expected '('", ex.Message);
         }
 
         [Fact]
         public void RunTimesOutOnLongRunningScript()
         {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>while(true) { }</script></job>");
+            var ex = Assert.Throws<ScriptException>(() => new CScriptEngine(TimeSpan.FromMilliseconds(100)).Execute(@"<script language='JavaScript'>while(true) { }</script>"));
 
-                var ex = Assert.Throws<ScriptException>(() => new CScriptCommand(TimeSpan.FromMilliseconds(100)).Run(tempFile.FileName));
-
-                Assert.Contains("Script execution time was exceeded on script", ex.Message);
-            }
-        }
-
-        [Fact]
-        public void DebugReturnsStdOutText()
-        {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>WScript.Echo('Sample Text');</script></job>");
-
-                Assert.Equal("Sample Text", new CScriptCommand().Debug(tempFile.FileName));
-            }
-        }
-
-        [Fact]
-        public void DebugThrowsInvalidProgramExceptionOnBadInputFile()
-        {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>function ) { return 'Missing Opening ('; }</script></job>");
-
-                var ex = Assert.Throws<ScriptException>(() => new CScriptCommand().Debug(tempFile.FileName));
-
-                Assert.Contains("Microsoft JScript compilation error: Expected '('", ex.Message);
-            }
-        }
-
-        [Fact]
-        public void DebugTimesOutOnLongRunningScript()
-        {
-            using (var tempFile = new TempFile("wsf"))
-            {
-                File.WriteAllText(tempFile.FileName, @"<job id='Test'><script language='JavaScript'>while(true) { }</script></job>");
-
-                var ex = Assert.Throws<ScriptException>(() => new CScriptCommand(TimeSpan.FromMilliseconds(100)).Debug(tempFile.FileName));
-
-                Assert.Contains("Script execution time was exceeded on script", ex.Message);
-            }
+            Assert.Contains("Script execution time was exceeded on script", ex.Message);
         }
     }
 }

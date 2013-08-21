@@ -1,5 +1,7 @@
-﻿using System;
+﻿using JSTest.ScriptElements;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 /* Copyright (c) 2011 CBaxter
@@ -18,36 +20,41 @@ using System.Text;
 
 namespace JSTest
 {
-    internal interface ICScriptCommand
-    {
-        String Run(String fileName);
-        String Debug(String fileName);
-    }
-
-    internal class CScriptCommand : ICScriptCommand
+    internal class CScriptEngine : IScriptEngine
     {
         private readonly Int16 _timeoutInSeconds;
 
-        public CScriptCommand()
+        public CScriptEngine()
             : this(TimeSpan.FromSeconds(10))
         { }
 
-        public CScriptCommand(TimeSpan timeout)
+        public CScriptEngine(TimeSpan timeout)
         {
             if (timeout.TotalSeconds < 0 || timeout.TotalSeconds > Int16.MaxValue)
                 throw new ArgumentOutOfRangeException("timeout", timeout.TotalSeconds, String.Format("Timeout must be between {0} and {1} seconds inclusive.", 0, Int16.MaxValue));
 
-            _timeoutInSeconds = Convert.ToInt16(Math.Ceiling(timeout.TotalSeconds));
+            _timeoutInSeconds = System.Convert.ToInt16(Math.Ceiling(timeout.TotalSeconds));
         }
 
-        public String Run(String fileName)
+        public String Execute(String script)
         {
-            return Run(fileName, _timeoutInSeconds, false);
-        }
+            String scriptFile = Path.ChangeExtension(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()), ".wsf");
 
-        public String Debug(String fileName)
-        {
-            return Run(fileName, _timeoutInSeconds, Debugger.IsAttached);
+            try
+            {
+                using (var writer = new StreamWriter(scriptFile))
+                {
+                    writer.WriteLine("<job id='UnitTest'>");
+                    writer.Write(script);
+                    writer.WriteLine("</job>");
+                }
+
+                return Run(scriptFile, _timeoutInSeconds, Debugger.IsAttached);
+            }
+            finally
+            {
+                File.Delete(scriptFile);
+            }
         }
 
         private static String Run(String fileName, Int16 timeoutInSeconds, Boolean enableDebugging)
@@ -90,6 +97,11 @@ namespace JSTest
 
                 throw new ScriptException(error);
             }
+        }
+
+        public string Convert(ScriptElement element)
+        {
+            return element.ToScriptFragment();
         }
     }
 }

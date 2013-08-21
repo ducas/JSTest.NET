@@ -118,22 +118,20 @@ namespace JSTest.Test
             Assert.False(cscriptCommand.ScriptContainedDebuggerStatement);
         }
 
-        private class FakeCScriptCommand : ICScriptCommand
+        private class FakeCScriptCommand : IScriptEngine
         {
             public Boolean ScriptContainedDebuggerStatement { get; set; }
 
-            public String Run(String fileName)
+            public String Execute(String script)
             {
-                ScriptContainedDebuggerStatement = File.ReadAllText(fileName).Contains("debugger;");
+                ScriptContainedDebuggerStatement = script.Contains("debugger;");
 
                 return null;
             }
 
-            public String Debug(String fileName)
+            public string Convert(ScriptElement element)
             {
-                ScriptContainedDebuggerStatement = File.ReadAllText(fileName).Contains("debugger;");
-
-                return null;
+                return element.ToScriptFragment();
             }
         }
     }

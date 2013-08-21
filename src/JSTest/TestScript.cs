@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
 using System.Text;
 using JSTest.ScriptElements;
 using JSTest.ScriptLibraries;
@@ -26,7 +24,7 @@ namespace JSTest
         private const String NoAction = "";
         private const String Breakpoint = "debugger;";
         private readonly StringBuilder _script = new StringBuilder();
-        private readonly ICScriptCommand _cscriptCommand;
+        private readonly IScriptEngine _scriptCommand;
 
         public Boolean IncludeDefaultBreakpoint { get; set; }
 
@@ -35,14 +33,14 @@ namespace JSTest
         { }
 
         public TestScript(TimeSpan timeout)
-            : this(new CScriptCommand(timeout))
+            : this(new CScriptEngine(timeout))
         { }
 
-        internal TestScript(ICScriptCommand cscriptCommand)
+        internal TestScript(IScriptEngine scriptCommand)
         {
             IncludeDefaultBreakpoint = true;
 
-            _cscriptCommand = cscriptCommand;
+            _scriptCommand = scriptCommand;
         }
 
         public void AppendBlock(String scriptBlock)
@@ -54,19 +52,24 @@ namespace JSTest
         {
             Verify.NotNull(scriptBlock, "scriptBlock");
 
-            _script.AppendLine(scriptBlock.ToScriptFragment());
+            AppendLine(scriptBlock);
         }
 
         public void AppendFile(String fileName)
         {
-            _script.AppendLine(new ScriptInclude(fileName));
+            AppendLine(new ScriptInclude(fileName));
         }
 
         public void AppendFile(ScriptInclude scriptInclude)
         {
             Verify.NotNull(scriptInclude, "scriptInclude");
 
-            _script.AppendLine(scriptInclude.ToScriptFragment());
+            AppendLine(scriptInclude);
+        }
+
+        private void AppendLine(ScriptElement element)
+        {
+            _script.AppendLine(_scriptCommand.Convert(element));
         }
 
         public String RunTest(TestCase testCase)
@@ -88,25 +91,11 @@ namespace JSTest
 
         public String RunTest(String testScript, String setup, String teardown)
         {
-            String scriptFile = Path.ChangeExtension(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()), ".wsf");
+            var finalScript = new StringBuilder(_script.ToString());
+            finalScript.AppendLine(_scriptCommand.Convert(new JsonLibrary()));
+            finalScript.AppendLine(_scriptCommand.Convert(CreateExecutor(setup, testScript, teardown)));
 
-            try
-            {
-                using (var writer = new StreamWriter(scriptFile))
-                {
-                    writer.WriteLine("<job id='UnitTest'>");
-                    writer.Write(this);
-                    writer.WriteLine(new JsonLibrary());
-                    writer.WriteLine(CreateExecutor(setup, testScript, teardown));
-                    writer.WriteLine("</job>");
-                }
-
-                return Debugger.IsAttached ? _cscriptCommand.Debug(scriptFile) : _cscriptCommand.Run(scriptFile);
-            }
-            finally
-            {
-                File.Delete(scriptFile);
-            }
+            return _scriptCommand.Execute(finalScript.ToString());
         }
 
         private TestExecutor CreateExecutor(String setup, String testScript, String teardown)
