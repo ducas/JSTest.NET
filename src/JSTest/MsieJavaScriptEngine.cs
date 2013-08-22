@@ -1,4 +1,5 @@
 ﻿using JSTest.ScriptElements;
+using MsieJavaScriptEngine.ActiveScript;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,13 +23,20 @@ namespace JSTest
 
         public string Execute(string script)
         {
-            var engine = new Engine(_useEcmaScript5Polyfill, _useJson2Library);
+            try
+            {
+                var engine = new Engine(_useEcmaScript5Polyfill, _useJson2Library);
 
-            var stringifiedResult = engine.Evaluate(script) as string;
-            var sampleResult = new { successful = false, result = "", error = "" };
-            dynamic json = JsonConvert.DeserializeAnonymousType(stringifiedResult, sampleResult);
-            if (!json.successful) throw new ScriptException(json.error);
-            return json.result;
+                var stringifiedResult = engine.Evaluate(script) as string;
+                var sampleResult = new { successful = false, result = "", error = "" };
+                dynamic json = JsonConvert.DeserializeAnonymousType(stringifiedResult, sampleResult);
+                if (!json.successful) throw new ScriptException(json.error);
+                return json.result;
+            }
+            catch (ActiveScriptException ex)
+            {
+                throw new ScriptException(ex.Message, ex);
+            }
         }
 
         public string Convert(ScriptElement element)
