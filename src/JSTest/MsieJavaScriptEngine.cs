@@ -10,7 +10,7 @@ using Engine = MsieJavaScriptEngine.MsieJsEngine;
 
 namespace JSTest
 {
-    internal class MsieJavaScriptEngine : IScriptEngine
+    public class MsieJavaScriptEngine : IScriptEngine
     {
         bool _useEcmaScript5Polyfill;
         bool _useJson2Library;

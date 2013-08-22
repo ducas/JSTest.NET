@@ -20,7 +20,7 @@ using System.Text;
 
 namespace JSTest
 {
-    internal class CScriptEngine : IScriptEngine
+    public class CScriptEngine : IScriptEngine
     {
         private readonly Int16 _timeoutInSeconds;
 
