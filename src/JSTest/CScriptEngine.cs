@@ -24,16 +24,14 @@ namespace JSTest
     {
         private readonly Int16 _timeoutInSeconds;
 
-        public CScriptEngine()
-            : this(TimeSpan.FromSeconds(10))
-        { }
-
-        public CScriptEngine(TimeSpan timeout)
+        public CScriptEngine(TimeSpan? timeout = null)
         {
-            if (timeout.TotalSeconds < 0 || timeout.TotalSeconds > Int16.MaxValue)
-                throw new ArgumentOutOfRangeException("timeout", timeout.TotalSeconds, String.Format("Timeout must be between {0} and {1} seconds inclusive.", 0, Int16.MaxValue));
+            if (timeout == null) timeout = TimeSpan.FromSeconds(10);
 
-            _timeoutInSeconds = System.Convert.ToInt16(Math.Ceiling(timeout.TotalSeconds));
+            if (timeout.Value.TotalSeconds < 0 || timeout.Value.TotalSeconds > Int16.MaxValue)
+                throw new ArgumentOutOfRangeException("timeout", timeout.Value.TotalSeconds, String.Format("Timeout must be between {0} and {1} seconds inclusive.", 0, Int16.MaxValue));
+
+            _timeoutInSeconds = System.Convert.ToInt16(Math.Ceiling(timeout.Value.TotalSeconds));
         }
 
         public String Execute(String script)

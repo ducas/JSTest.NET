@@ -3,7 +3,7 @@ using System;
 
 namespace JSTest
 {
-    internal interface IScriptEngine
+    public interface IScriptEngine
     {
         String Execute(String script);
         String Convert(ScriptElement element);

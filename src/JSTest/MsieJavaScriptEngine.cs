@@ -11,9 +11,18 @@ namespace JSTest
 {
     internal class MsieJavaScriptEngine : IScriptEngine
     {
+        bool _useEcmaScript5Polyfill;
+        bool _useJson2Library;
+
+        public MsieJavaScriptEngine(bool useEcmaScript5Polyfill = true, bool useJson2Library = true)
+        {
+            _useEcmaScript5Polyfill = useEcmaScript5Polyfill;
+            _useJson2Library = useJson2Library;
+        }
+
         public string Execute(string script)
         {
-            var engine = new Engine(true, true);
+            var engine = new Engine(_useEcmaScript5Polyfill, _useJson2Library);
 
             var stringifiedResult = engine.Evaluate(script) as string;
             var sampleResult = new { successful = false, result = "", error = "" };

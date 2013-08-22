@@ -36,7 +36,7 @@ namespace JSTest
             : this(new CScriptEngine(timeout))
         { }
 
-        internal TestScript(IScriptEngine scriptCommand)
+        public TestScript(IScriptEngine scriptCommand)
         {
             IncludeDefaultBreakpoint = true;
 
